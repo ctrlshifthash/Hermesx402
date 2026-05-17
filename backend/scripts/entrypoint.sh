@@ -29,4 +29,5 @@ fi
 echo "Seeding demo data (idempotent)..."
 python -m scripts.seed || true
 
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Railway/most PaaS inject $PORT and route to it; fall back to 8000 locally.
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"
