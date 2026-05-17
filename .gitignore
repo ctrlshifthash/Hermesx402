@@ -1,0 +1,38 @@
+# ─── SECRETS — never commit ───────────────────────────────────────────
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+DEPLOY_SECRETS.local.md
+*.local.md
+*.pem
+*.key
+
+# ─── Python ───────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# ─── Databases / local data ───────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Node / frontend build ────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+*.log
+
+# ─── OS / editor ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

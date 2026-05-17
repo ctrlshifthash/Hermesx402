@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-paper text-ink font-mono antialiased;
+  /* faint ledger grid — the page is literally accounting paper */
+  background-image:
+    linear-gradient(#1a17120a 1px, transparent 1px),
+    linear-gradient(90deg, #1a17120a 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+::selection { background: #1F2EE6; color: #F4EFE2; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: #EFE8D6; }
+::-webkit-scrollbar-thumb { background: #1A1712; border: 3px solid #EFE8D6; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+h1, h2, h3, .display { @apply font-display tracking-tight; }
+
+/* Ledger card: hard ink border, square, offset shadow. No glass, no blur. */
+.card {
+  @apply border border-rule bg-paper-100 p-5;
+  box-shadow: 4px 4px 0 0 #1A1712;
+}
+.card-flat { @apply border border-rule bg-paper-100; }
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 border border-rule
+         px-4 py-2.5 text-sm font-semibold uppercase tracking-wide
+         transition-[transform,box-shadow] disabled:opacity-50;
+}
+.btn-primary {
+  @apply btn bg-accent text-paper-100;
+  box-shadow: 4px 4px 0 0 #1A1712;
+}
+.btn-primary:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 #1A1712; }
+.btn-ghost {
+  @apply btn bg-paper-100 text-ink;
+  box-shadow: 4px 4px 0 0 #1A1712;
+}
+.btn-ghost:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 #1A1712; }
+
+.input {
+  @apply w-full border border-rule bg-paper-100 px-3.5 py-2.5 text-sm
+         text-ink placeholder:text-ink-300 focus:outline-none
+         focus:ring-2 focus:ring-accent;
+}
+.label {
+  @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em]
+         text-ink-500;
+}
+.eyebrow {
+  @apply inline-flex items-center gap-2 border border-rule bg-paper-200
+         px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em];
+}
+.rule-x { @apply border-t border-rule; }
+.skeleton { @apply animate-pulse border border-rule bg-paper-200; }
+
+/* Tabular ledger numerals everywhere numbers matter */
+.tnum { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }

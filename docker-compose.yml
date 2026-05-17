@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: agent
+      POSTGRES_DB: agentledger
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://agent:agent@db:5432/agentledger
+      REDIS_URL: redis://redis:6379/0
+      # inproc so the live WS run timeline works out-of-the-box in the demo.
+      # The `worker` (arq) service is the documented horizontal-scale path;
+      # cross-process realtime then needs Redis pub/sub (README "Path to real").
+      RUN_MODE: inproc
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-change-me}
+      X402_EVM_PRIVATE_KEY: ${X402_EVM_PRIVATE_KEY:-}
+      MOCK_API_BASE_URL: http://api:8000/mockapi
+      FRONTEND_ORIGIN: http://localhost:5173
+    ports: ["8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  worker:
+    build: ./backend
+    command: arq app.workers.arq_app.WorkerSettings
+    environment:
+      DATABASE_URL: postgresql+asyncpg://agent:agent@db:5432/agentledger
+      REDIS_URL: redis://redis:6379/0
+      RUN_MODE: arq
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      MOCK_API_BASE_URL: http://api:8000/mockapi
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+      api: { condition: service_started }
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_BASE: http://localhost:8000
+    ports: ["5173:5173"]
+    depends_on: [api]
+
+volumes:
+  pgdata:
