@@ -1,8 +1,9 @@
-"""marketplace + wallet/credit/journal columns added after 0001
+"""marketplace + wallet/credit/journal columns added after 0001 (idempotent)
 
-Brings the Postgres schema up to the current models: trial credit, Privy
-delegated-wallet fields, run journal + creator, and the agent-marketplace
-columns. (SQLite auto-adds these in app startup; Postgres needs this.)
+0001_initial already defines some newer columns (credit_remaining, journal);
+this only adds the ones genuinely missing (Privy delegated wallet, run
+creator, agent-marketplace fields). Idempotent: safe to re-run, and safe
+whether or not 0001 already has a given column.
 
 Revision ID: 0002_marketplace_and_wallets
 Revises: 0001_initial
@@ -19,62 +20,67 @@ depends_on = None
 NUM = sa.Numeric(38, 18)
 
 
+def _cols(insp, table):
+    return {c["name"] for c in insp.get_columns(table)}
+
+
+def _idx(insp, table):
+    return {i["name"] for i in insp.get_indexes(table)}
+
+
 def upgrade() -> None:
-    # --- users: trial credit + Privy delegated wallet ---
-    op.add_column(
-        "users",
-        sa.Column("credit_remaining", NUM, server_default="1",
-                  nullable=False),
-    )
-    op.add_column("users", sa.Column("privy_wallet_id", sa.String(128)))
-    op.add_column("users", sa.Column("privy_wallet_address", sa.String(64)))
-    op.add_column(
-        "users",
-        sa.Column("payments_delegated", sa.Boolean(),
-                  server_default=sa.false(), nullable=False),
-    )
+    bind = op.get_bind()
+    insp = sa.inspect(bind)
 
-    # --- runs: persisted journal + marketplace creator ---
-    op.add_column(
-        "runs",
-        sa.Column("journal", sa.Text(), server_default="[]",
-                  nullable=False),
-    )
-    op.add_column("runs", sa.Column("creator_user_id", sa.String(36)))
-    op.create_index("ix_runs_creator_user_id", "runs", ["creator_user_id"])
+    add = {
+        "users": [
+            ("privy_wallet_id", sa.Column("privy_wallet_id", sa.String(128))),
+            ("privy_wallet_address",
+             sa.Column("privy_wallet_address", sa.String(64))),
+            ("payments_delegated",
+             sa.Column("payments_delegated", sa.Boolean(),
+                       server_default=sa.false(), nullable=False)),
+            ("credit_remaining",
+             sa.Column("credit_remaining", NUM, server_default="1",
+                       nullable=False)),
+        ],
+        "runs": [
+            ("journal", sa.Column("journal", sa.Text(),
+                                  server_default="[]", nullable=False)),
+            ("creator_user_id",
+             sa.Column("creator_user_id", sa.String(36))),
+        ],
+        "agents": [
+            ("is_public", sa.Column("is_public", sa.Boolean(),
+                                    server_default=sa.false(),
+                                    nullable=False)),
+            ("title", sa.Column("title", sa.String(120))),
+            ("description", sa.Column("description", sa.Text())),
+            ("category", sa.Column("category", sa.String(48))),
+            ("price_per_run_usd",
+             sa.Column("price_per_run_usd", NUM, server_default="0",
+                       nullable=False)),
+            ("runs_rented", sa.Column("runs_rented", sa.Integer(),
+                                      server_default="0", nullable=False)),
+        ],
+    }
+    for table, cols in add.items():
+        have = _cols(insp, table)
+        for name, col in cols:
+            if name not in have:
+                op.add_column(table, col)
 
-    # --- agents: marketplace listing ---
-    op.add_column(
-        "agents",
-        sa.Column("is_public", sa.Boolean(), server_default=sa.false(),
-                  nullable=False),
-    )
-    op.add_column("agents", sa.Column("title", sa.String(120)))
-    op.add_column("agents", sa.Column("description", sa.Text()))
-    op.add_column("agents", sa.Column("category", sa.String(48)))
-    op.add_column(
-        "agents",
-        sa.Column("price_per_run_usd", NUM, server_default="0",
-                  nullable=False),
-    )
-    op.add_column(
-        "agents",
-        sa.Column("runs_rented", sa.Integer(), server_default="0",
-                  nullable=False),
-    )
-    op.create_index("ix_agents_is_public", "agents", ["is_public"])
-    op.create_index("ix_agents_category", "agents", ["category"])
+    idx = {
+        "ix_runs_creator_user_id": ("runs", ["creator_user_id"]),
+        "ix_agents_is_public": ("agents", ["is_public"]),
+        "ix_agents_category": ("agents", ["category"]),
+    }
+    for name, (table, cols) in idx.items():
+        if name not in _idx(insp, table):
+            op.create_index(name, table, cols)
 
 
 def downgrade() -> None:
-    op.drop_index("ix_agents_category", "agents")
-    op.drop_index("ix_agents_is_public", "agents")
-    for c in ("runs_rented", "price_per_run_usd", "category",
-              "description", "title", "is_public"):
-        op.drop_column("agents", c)
-    op.drop_index("ix_runs_creator_user_id", "runs")
-    op.drop_column("runs", "creator_user_id")
-    op.drop_column("runs", "journal")
-    for c in ("payments_delegated", "privy_wallet_address",
-              "privy_wallet_id", "credit_remaining"):
-        op.drop_column("users", c)
+    # Non-destructive: these columns are also created by 0001 in fresh DBs,
+    # so downgrade is a no-op to avoid dropping shared columns.
+    pass
