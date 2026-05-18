@@ -1,129 +1,198 @@
-# AgentLedger — Mission Control + Expense Tracking for AI Agents
+<div align="center">
 
-Launch autonomous agent **runs**. When an API answers `402 Payment Required`,
-the agent pays the micropayment over **x402** (USDC) — **only if within budget**
-— and continues. Every call and payment is logged with full context and shown
-in a real-time dashboard.
+# HERMES·x402
 
-> **Honesty first.** This repository is a complete, working **architectural
-> spine** with the critical money path built fully and tested. It runs
-> end-to-end today against a **mock x402 facilitator + mock paid API** (the
-> spec explicitly permits this as a build stage). The flag-flip to real money,
-> real Hermes, mainnet, soak/reconcile-on-chain is **scaffolded and
-> documented, not finished** — see [Honest status](#honest-status) and
-> [Path to real](#path-to-real-phase-2). Nothing real-money is hidden behind a
-> mock that pretends to be real.
+### Autonomous AI agents that pay for the data they need — on-chain, on the record.
+
+A real [Nous Hermes](https://nousresearch.com/) agent researches the live web,
+reasons over what it finds, and **pays x402 paywalls in USDC on Solana** — every
+cent double-entered into an audit ledger you control, behind hard budgets that
+stop spend *before* it leaves the wallet.
+
+[**Live app →** hermesx402.vercel.app](https://hermesx402.vercel.app) ·
+[**API →** hermesx402-production.up.railway.app](https://hermesx402-production.up.railway.app/api/healthz)
+
+`FastAPI` · `React + Vite` · `x402` · `Solana mainnet` · `Privy` · `Nous Hermes 3 70B`
+
+</div>
 
 ---
 
-## Quick start
+## The idea
 
-### A. Local, zero-config (SQLite, in-proc worker, mock payments)
-```bash
-cd backend
-python -m venv .venv && . .venv/Scripts/activate     # Windows
-#                       source .venv/bin/activate      # macOS/Linux
-pip install -r requirements.txt
-python -m scripts.seed                                # demo user + agent
-uvicorn app.main:app --reload                         # http://localhost:8000
-```
-```bash
-cd frontend
-npm install && npm run dev                            # http://localhost:5173
-```
-Sign in with the pre-filled **demo@agentledger.dev / demo12345**, click
-**Start a run**, watch the live timeline pay mock x402 paywalls.
+The web is putting up paywalls for machines: HTTP **`402 Payment Required`** is
+finally being used for what it was reserved for. The [x402
+protocol](https://www.x402.org/) lets a client settle that payment in
+stablecoin and retry — no accounts, no API keys, no invoices.
 
-### B. One command (Docker: api + worker + Postgres + Redis + frontend)
-```bash
-cp .env.example .env
-docker-compose up --build
-# frontend http://localhost:5173 · api http://localhost:8000/docs
-```
-Postgres runs Alembic migrations + seed automatically on boot.
+**Hermesx402** is the cockpit for that world. You give a real LLM agent a goal
+and a budget. It does genuine research, and when it hits a priced endpoint it
+pays the micropayment itself in USDC on Solana and keeps going. Nothing is
+simulated: real model, real web, real on-chain settlement, real
+explorer-verifiable transactions — all written into a tamper-evident,
+double-entry ledger.
 
-### Tests (critical path)
-```bash
-cd backend && pytest -q          # 15 tests: wrapper, budget, auth, e2e
-python -m scripts.smoke          # live-server full-pipeline smoke
+> **Honesty is the product.** Trial-credit spend that hasn't moved real money is
+> labelled *"Trial credit"*, never a fake hash. Real settlements carry a real
+> Solana tx hash you can open on Solscan. The agent never invents a fact or a
+> source URL.
+
+---
+
+## How it works
+
 ```
+  1. SIGN IN                2. RUN                       3. PAY                4. LEDGER
+  ┌──────────┐   goal   ┌───────────────┐  402 +     ┌──────────────┐  tx   ┌────────────┐
+  │  Privy   │ ───────► │ Nous Hermes   │  no creds  │  x402 client │ ────► │ append-only│
+  │  wallet  │          │ • plan        │ ─────────► │  • budget ✓  │       │ double-    │
+  │  connect │ ◄─────── │ • web research│            │  • USDC pay  │ ◄──── │ entry      │
+  └──────────┘  answer  │ • synthesize  │  data      │  • Solana    │ recon │ ledger     │
+                        └───────────────┘            └──────────────┘       └────────────┘
+```
+
+1. **Sign in** with Privy (wallet connect). Every account gets **$1 free
+   credit** — no signup, no card.
+2. **File a run.** Hermes plans, does **live web research** (real citations),
+   and writes a structured, sourced answer.
+3. **It pays its way.** If the goal needs a priced x402 endpoint, the agent
+   settles the micropayment in **USDC on Solana mainnet** through a facilitator
+   — *only after* the budget gate passes. Over budget = blocked, $0 moves.
+4. **Who pays?** Trial credit first (platform-funded, debited as your tab).
+   When it runs out, the agent pays from **your own wallet** — you approve the
+   payment in your wallet at spend time. The server never holds your key.
+5. **Everything is on the books.** Every call and payment is double-entered
+   with amount, status, and a real tx hash, reconciled against settlement.
+
+---
+
+## Features
+
+| | |
+|---|---|
+| 🧠 **Real Hermes reasoning** | Every run is driven by a real Nous Hermes 3 (70B) LLM — planning, reasoning, writing. Nothing scripted. |
+| 🌐 **Live web research** | Searches the live web, answers with real, clickable citations. Never fabricates a URL or a fact. |
+| 🪙 **Autonomous x402 payments** | Settles `402` paywalls in USDC on **Solana mainnet** over the x402 protocol — idempotent, on-chain, no human in the loop. |
+| 🛡️ **Hard budget guardrails** | Per-transaction / per-run / per-day caps enforced **before** any signature. Over budget → blocked instantly. |
+| 💳 **Credit → your wallet** | $1 free credit, then approve-at-spend from your own Privy/Solana wallet. Non-custodial — the server only ever gets a signature. |
+| 📒 **Append-only ledger** | Double-entry calls + payments, reconciled, exportable to Markdown, real Solscan links. |
+| 🔁 **Persistent memory** | Agents recall conclusions from past runs and build on them. |
+| ⏱️ **Scheduled & unattended** | Recurring goals fire on a timer, under the same budget. |
+| 🚧 **Anti-abuse** | One-time trial credit per IP; runs blocked when credit is exhausted without a funded wallet. |
 
 ---
 
 ## Architecture
 
 ```
-                       ┌─────────────────────────────────────────┐
-  React/TS (Vite)  ───► │  FastAPI                                 │
-  Tailwind/Framer       │   auth · agents · runs · payments ·      │
-  TanStack/Zustand      │   calls · budgets · dashboard · ops      │
-        ▲   ▲           │                                          │
-        │   │ WS        │   Run worker (inproc | arq)              │
-        │   └───────────┤      └─► AgentRunner ──► PaidHttpClient  │
-        │ REST          │                            (the x402     │
-        │               │                             WRAPPER)    │
-        │               │            │      │      │               │
-        │               │     budget │ idem │ log  │ events        │
-        │               │     check  │ pay  │ DB   │ hub ──► WS    │
-        │               │            ▼      ▼                      │
-        │               │     PaymentProvider  ◄── feature flag    │
-        │               │      mock │ x402(real SDK + facilitator) │
-        │               └──────────────────┬───────────────────────┘
-        │                                  ▼
-        └────────  PostgreSQL  ◄──  SQLAlchemy 2 async / Alembic
+  React + Vite ──REST──►  FastAPI  ──►  Run worker (in-proc / arq)
+  Tailwind/Framer  ◄─WS─    │              └─► OpenRouterAgentRunner
+  TanStack/Zustand          │                    │ Nous Hermes (OpenRouter)
+        │                   │                    │ live web research
+        │                   │                    └─► PaidHttpClient ── the x402 wrapper
+        │                   │                          │ budget check (pre-pay)
+        │                   │                          │ idempotent settle
+        │                   │                          │ persist call + payment
+        │                   │                          └─► PaymentProvider
+        │                   │                                ├─ platform signer  (trial credit)
+        │                   │                                ├─ Privy-delegated   (user wallet)
+        │                   │                                └─ browser approve-at-spend
+        │                   ▼
+        └──────────  SQLite / Postgres  ◄─ SQLAlchemy 2 async · Alembic
+                            ▲
+                     x402 SDK + facilitator (payai · Solana mainnet)
 ```
 
-- **`app/x402/wrapper.py`** — the heart. Implements the full §3 contract:
-  request → parse 402 → **budget check before any payment** → idempotent
-  settle → retry with proof → persist one `api_call` + one `payment` → emit WS
-  event. Crash between claim and settle leaves a `pending` payment flagged for
-  reconciliation (never blind re-pay).
-- **`app/services/budget.py`** — caps enforced against `settled + pending`
-  spend so concurrent runs cannot collectively overspend. Pure, no side
-  effects, unit-tested.
-- **`app/x402/provider.py`** — `MockPaymentProvider` (deterministic, no money)
-  vs `X402PaymentProvider` (real Coinbase SDK + facilitator). One env var
-  switches them; nothing else changes.
-- **`app/agent/`** — `ScriptedAgentRunner` genuinely drives the real wrapper
-  (only the *reasoning model* is scripted). `mcp_server.py` exposes
-  `paid_http_request` as an **MCP tool** — the concrete plug-in point for real
-  Hermes.
+**`app/x402/wrapper.py`** is the heart: request → parse `402` → **budget check
+before any payment** → idempotently claim a payment row → settle exactly once →
+persist one `api_call` + one `payment` → emit a live WS event. A crash between
+claim and settle leaves a `pending` row flagged for reconciliation — never a
+blind re-pay.
 
-### Why MCP for Hermes (not an in-proc tool)
-Hermes runs as its own CLI/process and natively connects to **MCP servers**.
-MCP is its first-class, process-isolated extension boundary — it also keeps
-the server-custodied signer out of the model process. The scripted runner
-shares our process so it uses the in-proc `PaidHttpClient` directly (no IPC).
-Both paths funnel through the **same** wrapper, so budget/idempotency/audit
-guarantees are runner-independent.
-
-### x402 / Hermes interface findings (build step 4)
-- x402 Python SDK: `x402Client`/`x402ClientSync`, `ExactEvmScheme` +
-  `EthAccountSigner(Account.from_key(...))`, `x402_requests` /
-  `create_payment_payload`, `get_payment_settle_response()` for the tx hash,
-  `HTTPFacilitatorClient(url=...)`, `max_amount` policy. SDK layout drifts by
-  version → isolated entirely behind `PaymentProvider`.
-- Hermes: CLI-first, 40+ tools, **MCP** for custom capabilities, subagents,
-  RPC tool calls. Real run needs model creds + the MCP server → documented
-  limitation, not wired locally.
+**`app/x402/provider.py`** isolates settlement behind one seam. The real
+`X402PaymentProvider` uses the official x402 SDK + a facilitator; the signer is
+swappable: the **platform key** (trial credit), a **Privy-delegated** user
+wallet, or **browser approve-at-spend** — all the same `ClientSvmSigner`
+interface.
 
 ---
 
-## Data model
-`users · wallets · agents · runs · api_calls · payments · budgets ·
-audit_log`. Money is `NUMERIC(38,18)`. `payments.idempotency_key` is **unique**
-(no double-pay). FKs and `created_at` indexed; composite indexes on
-`(run_id,status)` / `(run_id,outcome)`. Alembic migration `0001_initial`;
-SQLite auto-creates for the zero-config path.
+## Tech stack
 
-## Security
-- Budget enforced **before** settlement; over-budget funds never move
-  (test: `test_over_budget_blocked_no_funds_move`).
-- Strict per-user scoping on every REST route **and** the WebSocket.
-- JWT in httpOnly cookies; bcrypt; access/refresh + silent refresh.
-- Secrets only via env; structured logs **redact** key/token/password fields;
-  no signer ever client-side.
-- Rate limiting on auth + run creation.
+- **Backend:** FastAPI · async SQLAlchemy 2 · Pydantic v2 · Alembic · SQLite (local) / Postgres (prod)
+- **Frontend:** React 18 · TypeScript · Vite · TailwindCSS · Framer Motion · TanStack Query · Zustand
+- **Agent:** Nous Hermes 3 (70B) via OpenRouter + live web plugin
+- **Payments:** x402 protocol · USDC · Solana mainnet · [payai](https://facilitator.payai.network) facilitator
+- **Auth:** Privy wallet connect (JWKS ES256), frictionless guest sessions
+- **Deploy:** Railway (backend) · Vercel (frontend)
+
+---
+
+## Quick start (local)
+
+**Backend** — zero-config (SQLite, in-proc worker):
+```bash
+cd backend
+python -m venv .venv
+.\.venv\Scripts\activate            # Windows  ·  source .venv/bin/activate (mac/linux)
+pip install -r requirements.txt
+cp .env.example .env                # then fill in your keys
+uvicorn app.main:app --reload       # http://localhost:8000
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev                         # http://localhost:5173
+```
+
+Open the app, run a goal, watch the live journal stream. Tests:
+```bash
+cd backend && pytest -q             # critical-path suite
+```
+
+### Prove the money path is real
+```bash
+python -m scripts.verify_settlement   # one real on-chain x402 settlement → prints tx hash
+python -m scripts.verify_user_pays    # credit exhausted → user wallet pays → service responds
+```
+
+---
+
+## Deployment
+
+**Backend → Railway.** Root directory `backend`, Dockerfile build. Set the env
+vars from `.env.example` (Privy, OpenRouter, x402/Solana, `FRONTEND_ORIGIN`).
+The app binds Railway's `$PORT` automatically.
+
+**Frontend → Vercel.** Root directory `frontend`, Vite preset. Set
+`VITE_API_BASE=https://<your-backend>.up.railway.app` and redeploy (Vite bakes
+env at build time).
+
+Then set the backend's `FRONTEND_ORIGIN` to the exact Vercel origin (no
+trailing slash) for CORS. Secrets are documented in `backend/.env.example`;
+never commit real `.env`.
+
+---
+
+## Project structure
+
+```
+backend/
+  app/
+    agent/        OpenRouterAgentRunner (real Hermes + web), memory, plan
+    x402/         wrapper · provider · pending · browser/Privy signers
+    api/           auth · runs · wallets · payments · calls · dashboard · ops
+    workers/      in-proc run worker + scheduler
+    models/       SQLAlchemy schema (users·wallets·agents·runs·payments·…)
+  scripts/        verify_settlement · verify_user_pays · seed · smoke
+frontend/
+  src/
+    pages/        Dashboard · Runs · RunDetail · Payments · Calls · …
+    components/   Shell · StartRun · Markdown · PaymentApprover · ui
+    lib/          api · auth (Privy) · store
+```
 
 ---
 
@@ -131,36 +200,23 @@ SQLite auto-creates for the zero-config path.
 
 | Area | State |
 |---|---|
-| Auth, per-user isolation, REST, dashboards | **Real, working, tested** |
-| x402 wrapper: 402→budget→pay→log→retry→stream | **Real, working, tested** |
-| Budget enforcement (per-tx/run/day, concurrency-safe) | **Real, working, tested** |
-| Idempotency / no-double-pay, crash→reconcile flag | **Real, working, tested** |
-| Live WS run timeline + dashboard | **Real, working** |
-| Docker compose (api/worker/db/redis/frontend) | **Real, working** |
-| Payment **settlement** | **Mocked** (`MockPaymentProvider`, deterministic, no funds) |
-| Paid API | **Mocked** (`/mockapi`, real 402 + header gate; only settlement faked) |
-| Hermes reasoning | **Scripted** runner (real wrapper, scripted plan); MCP server provided |
-| Reconciliation | Real for mock; **on-chain verify is a documented stub** |
-| arq cross-process realtime | WS hub is in-proc; multi-proc needs **Redis pub/sub** (stub) |
-| Mainnet money / soak / alerting | **Not done** — see below |
+| Real Nous Hermes reasoning + live web research | ✅ Working |
+| Real on-chain x402 USDC settlement on **Solana mainnet** | ✅ Working — explorer-verifiable tx hashes |
+| Budget guardrails (pre-pay, concurrency-safe) | ✅ Working, tested |
+| Idempotency / no double-pay / crash→reconcile flag | ✅ Working, tested |
+| Trial credit → user-wallet approve-at-spend | ✅ Working (final wallet click is the user's) |
+| Privy auth · guest sessions · anti-abuse | ✅ Working |
+| Append-only ledger · live WS streaming · export | ✅ Working |
+| Scheduled/unattended runs | ✅ Working — but can't pay past credit (no human to approve) |
+| Facilitator | Public facilitators settle Solana **mainnet**; the legacy free one is devnet-only. Code is facilitator-agnostic. |
 
-## Path to real (Phase 2)
+No mock is presented as real. Trial-credit accounting is labelled as such;
+real settlements carry a real tx hash.
 
-| # | Item | Concrete next step |
-|---|---|---|
-| R1 | Real Hermes | `pip install mcp`, run `python -m app.agent.mcp_server`, point a Hermes agent's MCP config at `paid_http_request`, set agent `config_json.runner="hermes"`. Wrapper unchanged. |
-| R2 | Real x402 | Uncomment `x402`, `eth-account` in `requirements.txt`; `PAYMENT_PROVIDER=x402`; set `X402_EVM_PRIVATE_KEY` (server custody), `X402_FACILITATOR_URL`, `X402_ASSET_ADDRESS`. `X402PaymentProvider` is already implemented. |
-| R3 | Funded wallets | Replace seeded demo address with real per-user/agent key custody (KMS/HSM); refresh `balance_cached` from chain. |
-| R4 | Budget proven w/ real money | Same `check_budget` runs pre-settlement; add a mainnet low-cap test asserting an over-budget call leaves balance unchanged. |
-| R5 | Reconciliation | Implement chain/facilitator lookup in `services/reconcile.py` (currently flags real payments as unverified rather than claiming OK). |
-| R6 | Failure handling | Idempotency + pending-flag implemented; add chaos tests for facilitator timeout / partial settle / worker kill. |
-| R7 | Observability | `/metrics` + structured logs exist; add Sentry + alert on wallet drain / anomalous spend. |
-| R8 | Security review | Re-audit key custody + isolation under the real-money path before raising caps. |
-| R9 | Load/soak | `RUN_MODE=arq` + Redis; **swap the in-proc `EventHub` for Redis pub/sub** so the worker's events reach API WS clients across processes. |
-| R10 | Staged rollout | `PAYMENT_PROVIDER` flag already gates mock↔real: local(mock) → staging(testnet) → prod(mainnet, low caps). |
+---
 
-## Definition-of-done gap
-Real Hermes + real USDC on Base mainnet, on-chain reconciliation, cross-process
-realtime, alerting and soak testing are **not** complete. Everything required
-to get there is scaffolded behind the documented seams above — no mock is
-presented as real.
+<div align="center">
+
+**Hermesx402** — built on x402 · real Hermes agents · append-only ledger
+
+</div>
