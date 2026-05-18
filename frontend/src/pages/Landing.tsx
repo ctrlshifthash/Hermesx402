@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Database,
   Clock,
+  Store,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import DemoButton from "@/components/DemoButton";
@@ -131,6 +132,11 @@ const FEATURES = [
     Clock,
     "Scheduled & unattended",
     "Hand an agent a recurring goal and an interval. It fires on its own, under the same budget, and files every run into the ledger.",
+  ],
+  [
+    Store,
+    "Agent marketplace",
+    "Publish an agent and earn when others rent it. Renters pay the listing price in real USDC from their own wallet per run — creators keep 80%, fully on-chain.",
   ],
 ] as const;
 

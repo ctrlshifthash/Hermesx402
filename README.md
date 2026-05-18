@@ -79,7 +79,43 @@ double-entry ledger.
 | 📒 **Append-only ledger** | Double-entry calls + payments, reconciled, exportable to Markdown, real Solscan links. |
 | 🔁 **Persistent memory** | Agents recall conclusions from past runs and build on them. |
 | ⏱️ **Scheduled & unattended** | Recurring goals fire on a timer, under the same budget. |
+| 🏪 **Agent marketplace** | Publish an agent for others to rent. Renters pay the listing price in **real USDC from their own wallet** per run; the creator earns **80%** (platform 20%). |
 | 🚧 **Anti-abuse** | One-time trial credit per IP; runs blocked when credit is exhausted without a funded wallet. |
+
+---
+
+## The agent marketplace
+
+Any agent you own can be **listed for rent**. Someone else runs it; they pay,
+you earn — all on the same real x402 rails.
+
+**For creators:** Agents tab → 🏪 on an agent → set title, description,
+category, price/run → Publish. It appears in the **Marketplace** tab. You keep
+ownership; you earn **80%** of every rental (a withdrawable creator-earning
+ledger entry), platform takes 20%.
+
+**For renters:** browse the Marketplace → **Rent & run** → enter a goal. The
+run is **gated on payment**: before any agent work, your wallet prompts you to
+approve the listing price in **real USDC on Solana** (no trial credit on this
+path — declined or unfunded = no run, $0 moves). On success the on-chain tx is
+recorded, the agent runs, the result is yours, the creator is credited.
+
+**How it's wired (reuses the proven x402 path):**
+
+- `Agent` gains `is_public / title / description / category /
+  price_per_run_usd / runs_rented`; `Run` gains `creator_user_id`.
+- `POST /agents/{id}/publish` lists it; `GET /marketplace` (search +
+  category), `/marketplace/{id}`, `/marketplace/earnings`.
+- `create_run` accepts a **public agent you don't own** and stamps the
+  creator.
+- The x402 resource-server guard exposes `/mockapi/rent/{run_id}` with a
+  **dynamic per-run price resolver** = the listing price, paid to the
+  platform pay-to.
+- At run start, a rented run calls that endpoint through the **browser
+  approve-at-spend signer** — the renter's wallet signs, the facilitator
+  settles on Solana mainnet, and the run only proceeds on a real tx hash.
+- Split recorded as `Payment` rows: renter paid (`x402-rent`, real tx),
+  creator earning (`creator-earning`, 80%).
 
 ---
 
@@ -209,6 +245,7 @@ frontend/
 | Privy auth · guest sessions · anti-abuse | ✅ Working |
 | Append-only ledger · live WS streaming · export | ✅ Working |
 | Scheduled/unattended runs | ✅ Working — but can't pay past credit (no human to approve) |
+| Agent marketplace (publish, rent, 80/20 split) | ✅ Working — rentals paid in real USDC from the renter's wallet |
 | Facilitator | Public facilitators settle Solana **mainnet**; the legacy free one is devnet-only. Code is facilitator-agnostic. |
 
 No mock is presented as real. Trial-credit accounting is labelled as such;
