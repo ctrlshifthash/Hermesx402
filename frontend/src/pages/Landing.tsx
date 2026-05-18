@@ -122,17 +122,11 @@ const IconGitHub = (
   </svg>
 );
 const IconPump = (
-  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]">
-    <rect
-      x="3"
-      y="8.5"
-      width="18"
-      height="7"
-      rx="3.5"
-      transform="rotate(-45 12 12)"
-      fill="currentColor"
-    />
-  </svg>
+  <img
+    src="https://static.wixstatic.com/media/e2da02_248e6293fa024f6e9dd4130271bb14c3~mv2.png"
+    alt="Pump.fun"
+    className="h-5 w-5 object-contain"
+  />
 );
 
 function SocialRail() {
