@@ -108,7 +108,7 @@ const CONTRACT_ADDRESS = "TBA";
 
 // Socials. Swap PUMPFUN to the token page once it's live.
 const X_URL = "https://x.com/tryhermesx402";
-const GITHUB_URL = "https://github.com/ctrlshifthash/repo";
+const GITHUB_URL = "https://github.com/tryHermesx402/Hermesx402";
 const PUMPFUN_URL = "https://pump.fun";
 
 const IconX = (
