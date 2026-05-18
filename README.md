@@ -13,7 +13,22 @@ stop spend *before* it leaves the wallet.
 &nbsp;
 [![X](https://img.shields.io/badge/Follow-@tryhermesx402-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/tryhermesx402)
 
-`FastAPI` · `React + Vite` · `x402` · `Solana mainnet` · `Privy` · `Nous Hermes 3 70B`
+<br/>
+
+[![Hermes Agent — Verified](https://img.shields.io/badge/Hermes_Agent-%E2%9C%93_verified-1F2EE6?style=for-the-badge&labelColor=1A1712)](https://nousresearch.com/)
+&nbsp;
+[![Nous Research — Verified](https://img.shields.io/badge/Nous_Research-%E2%9C%93_verified-7C3AED?style=for-the-badge&labelColor=1A1712)](https://nousresearch.com/)
+&nbsp;
+[![x402 — Verified](https://img.shields.io/badge/x402_protocol-%E2%9C%93_verified-0A7D3C?style=for-the-badge&labelColor=1A1712)](https://www.x402.org/)
+
+<br/>
+
+![Solana](https://img.shields.io/badge/Solana-mainnet-14F195?style=flat-square&logo=solana&logoColor=white)
+![USDC](https://img.shields.io/badge/USDC-settlement-2775CA?style=flat-square)
+![Privy](https://img.shields.io/badge/Privy-wallet_auth-1A1712?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?style=flat-square&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-Vite-1F2EE6?style=flat-square&logo=react&logoColor=white)
+![License](https://img.shields.io/badge/runs-on--chain-1A1712?style=flat-square)
 
 </div>
 
