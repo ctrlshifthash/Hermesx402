@@ -10,9 +10,7 @@ cent double-entered into an audit ledger you control, behind hard budgets that
 stop spend *before* it leaves the wallet.
 
 [**🌐 Website**](https://hermesx402.dev) ·
-[**𝕏 / Twitter**](https://x.com/tryhermesx402) ·
-[**🚀 Live app**](https://hermesx402.vercel.app) ·
-[**API**](https://hermesx402-production.up.railway.app/api/healthz)
+[**𝕏 / Twitter**](https://x.com/tryhermesx402)
 
 `FastAPI` · `React + Vite` · `x402` · `Solana mainnet` · `Privy` · `Nous Hermes 3 70B`
 
