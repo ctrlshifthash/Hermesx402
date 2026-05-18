@@ -9,8 +9,9 @@ reasons over what it finds, and **pays x402 paywalls in USDC on Solana** — eve
 cent double-entered into an audit ledger you control, behind hard budgets that
 stop spend *before* it leaves the wallet.
 
-[**🌐 Website**](https://hermesx402.dev) ·
-[**𝕏 / Twitter**](https://x.com/tryhermesx402)
+[![Website](https://img.shields.io/badge/Website-hermesx402.dev-1F2EE6?style=for-the-badge&logo=googlechrome&logoColor=white)](https://hermesx402.dev)
+&nbsp;
+[![X](https://img.shields.io/badge/Follow-@tryhermesx402-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/tryhermesx402)
 
 `FastAPI` · `React + Vite` · `x402` · `Solana mainnet` · `Privy` · `Nous Hermes 3 70B`
 
