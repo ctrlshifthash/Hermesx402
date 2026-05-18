@@ -63,6 +63,15 @@ async def free_context():
     return {"summary": "Baseline context: market is active; proceed.", "free": True}
 
 
+@router.api_route("/rent/{run_id}", methods=["GET", "POST"])
+async def rent_receipt(run_id: str):
+    """Marketplace rental settlement target. The x402 guard gates this with
+    a per-run price = the listing price, paid to the platform. A request
+    only reaches here AFTER the renter's wallet payment is settled on-chain,
+    so just return the receipt."""
+    return {"rented": True, "run_id": run_id, "paid": True}
+
+
 @router.api_route("/paid/{topic}", methods=["GET", "POST"])
 async def paid_topic(
     topic: str,

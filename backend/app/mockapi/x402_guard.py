@@ -61,9 +61,47 @@ def build_payment_middleware():
             "network": caip,
             "max_timeout_seconds": 60,
         }
+
+        async def _rent_price(context) -> str:  # noqa: ANN001
+            """Dynamic price = the rented agent's listing price (USD).
+            Path is /mockapi/rent/<run_id>."""
+            try:
+                rid = context.path.rstrip("/").split("/")[-1]
+                from sqlalchemy import select  # noqa: PLC0415
+
+                from app.db.session import SessionLocal  # noqa: PLC0415
+                from app.models import Agent, Run  # noqa: PLC0415
+
+                async with SessionLocal() as db:
+                    run = (
+                        await db.execute(
+                            select(Run).where(Run.id == rid)
+                        )
+                    ).scalar_one_or_none()
+                    if run is None:
+                        return "$0"
+                    ag = (
+                        await db.execute(
+                            select(Agent).where(Agent.id == run.agent_id)
+                        )
+                    ).scalar_one_or_none()
+                    price = float(ag.price_per_run_usd or 0) if ag else 0.0
+                return f"${max(price, 0.0):.6f}"
+            except Exception:  # noqa: BLE001
+                return "$0"
+
+        rent_accepts = {
+            "scheme": "exact",
+            "pay_to": settings.x402_pay_to,
+            "price": _rent_price,
+            "network": caip,
+            "max_timeout_seconds": 90,
+        }
         routes = {
             "GET /mockapi/paid/*": {"accepts": [accepts]},
             "POST /mockapi/paid/*": {"accepts": [accepts]},
+            "GET /mockapi/rent/*": {"accepts": [rent_accepts]},
+            "POST /mockapi/rent/*": {"accepts": [rent_accepts]},
         }
         logger.info(
             "x402 resource-server guard active",

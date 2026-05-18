@@ -72,17 +72,18 @@ function RentModal({
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
           />
-          <div className="mt-4 flex items-center justify-between border border-rule bg-paper-100 px-4 py-2.5 text-[11px] uppercase tracking-wider">
-            <span className="text-ink-500">
-              Creator fee{" "}
+          <div className="mt-4 border border-rule bg-paper-100 px-4 py-2.5 text-[11px] uppercase tracking-wider text-ink-500">
+            <div className="flex items-center justify-between">
+              <span>Rental price</span>
               <span className="tnum font-semibold text-ink">
-                {usd(item.price_per_run_usd)}
+                {usd(item.price_per_run_usd)} USDC
               </span>
-            </span>
-            <span className="text-ink-500">
-              + usage <span className="tnum font-semibold">~$0.12</span> /
-              run
-            </span>
+            </div>
+            <p className="mt-1.5 normal-case tracking-normal text-ink-500">
+              Paid in <b>real USDC from your connected wallet</b> — your
+              wallet will prompt you to approve it before the agent runs. No
+              trial credit, no payment = no run.
+            </p>
           </div>
           <button
             className="btn-primary mt-4 w-full"

@@ -60,6 +60,98 @@ class OpenRouterAgentRunner:
             "X-Title": "Hermesx402",
         }
 
+        # ---- Marketplace: rented agent → renter pays the listing price in
+        # USDC from THEIR OWN wallet, on-chain, BEFORE any work. No trial
+        # credit. No payment → no run. Free agents (price 0) skip this. ----
+        if run.creator_user_id:
+            price = Decimal(str(agent.price_per_run_usd or 0))
+            if price > 0:
+                import asyncio as _aio  # noqa: PLC0415
+
+                from app.models import Wallet as _W  # noqa: PLC0415
+                from app.x402.provider import (  # noqa: PLC0415
+                    build_browser_signed_provider,
+                    parse_x402_terms,
+                )
+
+                w = (
+                    await db.execute(
+                        select(_W).where(_W.id == run.wallet_id)
+                    )
+                ).scalar_one_or_none()
+                addr = w.address if w else None
+                if not addr or addr.startswith("trial:"):
+                    await emit("status", status="failed",
+                               summary="Renting is paid in USDC from your "
+                               "own wallet — connect & fund a Solana "
+                               "wallet, then try again.")
+                    await persist_journal()
+                    raise RuntimeError("rental requires a funded wallet")
+
+                await emit("reasoning",
+                           text=f"Rental — approve {price} USDC in your "
+                                f"wallet to rent "
+                                f"“{agent.title or agent.name}”.")
+                rent_url = f"{settings.mock_api_base_url}/rent/{run.id}"
+                result = None
+                try:
+                    prov = build_browser_signed_provider(
+                        run.id, addr, _aio.get_running_loop()
+                    )
+                    r402 = httpx.get(rent_url, timeout=20)
+                    terms = parse_x402_terms(r402)
+                    result = await prov.pay_and_fetch(
+                        "GET", rent_url, json=None, headers={},
+                        terms=terms, idempotency_key="rent_" + run.id,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("rent settle failed: %s", exc)
+
+                if not (result and result.success and result.tx_hash):
+                    await emit("status", status="failed",
+                               summary="Rental payment was not completed "
+                               "— the agent did not run. $0 moved.")
+                    await persist_journal()
+                    raise RuntimeError("rental not paid")
+
+                rc = ApiCall(
+                    run_id=run.id, wallet_id=run.wallet_id,
+                    agent_id=agent.id, user_id=run.user_id,
+                    url="marketplace://rent", method="RENT",
+                    status_code=200, paid=True, outcome="ok",
+                    purpose=f"Rented: {agent.title or agent.name}",
+                )
+                db.add(rc)
+                await db.flush()
+                creator_cut = (price * Decimal("0.80")).quantize(
+                    Decimal("0.000001")
+                )
+                db.add(Payment(
+                    api_call_id=rc.id, run_id=run.id,
+                    wallet_id=run.wallet_id, user_id=run.user_id,
+                    amount=price, currency="USDC",
+                    network=settings.x402_network,
+                    status=PaymentStatus.settled, tx_hash=result.tx_hash,
+                    facilitator_ref="x402-rent",
+                    reconcile_note="marketplace rental "
+                    "(paid from your wallet, on-chain)",
+                    idempotency_key="rentpay_" + uuid.uuid4().hex,
+                ))
+                db.add(Payment(
+                    api_call_id=rc.id, run_id=run.id,
+                    wallet_id=run.wallet_id, user_id=run.creator_user_id,
+                    amount=creator_cut, currency="USDC",
+                    network=settings.x402_network,
+                    status=PaymentStatus.settled,
+                    facilitator_ref="creator-earning",
+                    reconcile_note=(agent.title or agent.name)[:120],
+                    idempotency_key="earn_" + uuid.uuid4().hex,
+                ))
+                await db.commit()
+                await emit("payment_settled", amount=str(price),
+                           url="marketplace://rent",
+                           purpose="agent rental", tx_hash=result.tx_hash)
+
         # ---- recall persistent memory ----
         past = list(
             (
@@ -263,59 +355,10 @@ class OpenRouterAgentRunner:
                     Decimal(str(user.credit_remaining)) - fee
                 )
 
-            # --- Marketplace split: renting someone else's public agent ---
-            # The renter pays the listing price; the platform keeps 20%, the
-            # creator earns 80% (recorded as a creator-earning Payment).
-            rent_total = Decimal("0")
-            if run.creator_user_id:
-                price = Decimal(str(agent.price_per_run_usd or 0))
-                if price > 0:
-                    creator_cut = (price * Decimal("0.80")).quantize(
-                        Decimal("0.000001")
-                    )
-                    rc = ApiCall(
-                        run_id=run.id, wallet_id=run.wallet_id,
-                        agent_id=agent.id, user_id=run.user_id,
-                        url="marketplace://rent", method="RENT",
-                        status_code=200, paid=True, outcome="ok",
-                        purpose=f"Rented agent: {agent.title or agent.name}",
-                    )
-                    db.add(rc)
-                    await db.flush()
-                    # Renter pays the full price (credit first).
-                    if Decimal(str(user.credit_remaining)) >= price:
-                        user.credit_remaining = (
-                            Decimal(str(user.credit_remaining)) - price
-                        )
-                    db.add(Payment(
-                        api_call_id=rc.id, run_id=run.id,
-                        wallet_id=run.wallet_id, user_id=run.user_id,
-                        amount=price, currency="USDC",
-                        network=settings.x402_network,
-                        status=PaymentStatus.settled,
-                        facilitator_ref="platform-credit",
-                        reconcile_note="marketplace rent (renter paid)",
-                        idempotency_key="rent_" + uuid.uuid4().hex,
-                    ))
-                    # Creator's earning (80%).
-                    db.add(Payment(
-                        api_call_id=rc.id, run_id=run.id,
-                        wallet_id=run.wallet_id,
-                        user_id=run.creator_user_id, amount=creator_cut,
-                        currency="USDC", network=settings.x402_network,
-                        status=PaymentStatus.settled,
-                        facilitator_ref="creator-earning",
-                        reconcile_note=(agent.title or agent.name)[:120],
-                        idempotency_key="earn_" + uuid.uuid4().hex,
-                    ))
-                    rent_total = price
-
             run_row = (
                 await db.execute(select(Run).where(Run.id == run.id))
             ).scalar_one()
-            run_row.total_spend = (
-                Decimal(str(run_row.total_spend)) + fee + rent_total
-            )
+            run_row.total_spend = Decimal(str(run_row.total_spend)) + fee
             run_row.total_calls = (run_row.total_calls or 0) + 1
             await db.commit()
             await hub.publish(run.id, {"kind": "payment_settled", "data": {
