@@ -89,6 +89,16 @@ async def lifespan(_: FastAPI):
     except Exception:  # noqa: BLE001
         logger.exception("orphan-run cleanup failed")
 
+    # Seed the marketplace with starter listings (idempotent — runs once).
+    try:
+        from app.db.seed_market import seed_marketplace  # noqa: PLC0415
+        from app.db.session import SessionLocal  # noqa: PLC0415
+
+        async with SessionLocal() as _sdb:
+            await seed_marketplace(_sdb)
+    except Exception:  # noqa: BLE001
+        logger.exception("marketplace seed step failed")
+
     sched_task = None
     if settings.run_mode == "inproc":
         import asyncio  # noqa: PLC0415
