@@ -232,8 +232,12 @@ export default function Landing() {
           <span>Est. 2026</span>
         </div>
         <div className="relative flex flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Hermesx402" className="h-11 w-auto" />
+          <Link
+            to="/"
+            className="flex items-center gap-3 font-display text-3xl font-bold tracking-tight"
+          >
+            <img src="/logo.png" alt="" className="h-11 w-auto" />
+            HERMES<span className="text-accent">x402</span>
           </Link>
           <div className="pointer-events-none absolute left-1/2 -translate-x-1/2">
             <div className="pointer-events-auto">

@@ -325,12 +325,12 @@ export default function Shell() {
           <span>Est. 2026</span>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-rule px-6 py-4">
-          <Link to="/" className="font-display text-3xl font-bold tracking-tight">
-            <img
-              src="/logo.png"
-              alt="Hermesx402"
-              className="h-10 w-auto"
-            />
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 font-display text-3xl font-bold tracking-tight"
+          >
+            <img src="/logo.png" alt="" className="h-10 w-auto" />
+            HERMES<span className="text-accent">x402</span>
           </Link>
           <div className="flex flex-wrap items-center gap-5">
             <nav className="flex items-center gap-5 text-[12px] font-semibold uppercase tracking-wider">
