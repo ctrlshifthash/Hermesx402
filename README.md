@@ -1,6 +1,6 @@
 <div align="center">
 
-# HERMES·x402
+# Hermesx402
 
 <img src="assets/hero.png" alt="Hermesx402" width="900" />
 
