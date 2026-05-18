@@ -146,10 +146,17 @@ function PublishModal({
           <p className="mt-3 text-[11px] uppercase tracking-wider text-ink-500">
             You earn 80% of each rental; renters also pay their own usage.
           </p>
+          {(title.trim().length < 1 || desc.trim().length < 1) && (
+            <p className="mt-2 text-[11px] uppercase tracking-wider text-debit">
+              Add a title and a short description to publish.
+            </p>
+          )}
           <div className="mt-4 flex gap-2">
             <button
               className="btn-primary flex-1"
-              disabled={busy || title.trim().length < 2 || desc.trim().length < 10}
+              disabled={
+                busy || title.trim().length < 1 || desc.trim().length < 1
+              }
               onClick={() => save(true)}
             >
               {busy ? <Spinner /> : "Publish"}

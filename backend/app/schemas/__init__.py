@@ -75,8 +75,8 @@ class AgentOut(ORM):
 
 class PublishIn(BaseModel):
     is_public: bool
-    title: str = Field(min_length=2, max_length=120)
-    description: str = Field(min_length=10, max_length=2000)
+    title: str = Field(min_length=1, max_length=120)
+    description: str = Field(min_length=1, max_length=2000)
     category: str = Field(default="General", max_length=48)
     price_per_run_usd: Decimal = Field(default=Decimal("0"), ge=0, le=100)
 
