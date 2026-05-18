@@ -10,6 +10,7 @@ import {
   Database,
   Clock,
   Store,
+  Copy,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import DemoButton from "@/components/DemoButton";
@@ -102,6 +103,37 @@ function LedgerTape() {
   );
 }
 
+// Token contract address — swap "TBA" for the real address at launch.
+const CONTRACT_ADDRESS = "TBA";
+
+function CopyCA() {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTRACT_ADDRESS);
+    } catch {
+      /* clipboard blocked — ignore */
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <button
+      onClick={copy}
+      title="Copy contract address"
+      className="hidden w-[60ch] max-w-[42vw] items-center justify-center gap-2 border border-rule bg-paper px-4 py-2 font-mono text-[12px] uppercase tracking-wider text-ink hover:bg-paper-200 lg:flex"
+    >
+      <span className="text-ink-500">CA:</span>
+      <span className="truncate">{CONTRACT_ADDRESS}</span>
+      {copied ? (
+        <span className="shrink-0 text-credit">copied</span>
+      ) : (
+        <Copy className="h-3.5 w-3.5 shrink-0 text-ink-500" />
+      )}
+    </button>
+  );
+}
+
 const FEATURES = [
   [
     Brain,
@@ -150,10 +182,15 @@ export default function Landing() {
           <span className="hidden sm:block">Autonomous Agent Payments</span>
           <span>Est. 2026</span>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+        <div className="relative flex flex-wrap items-center justify-between gap-4 px-6 py-4">
           <Link to="/" className="font-display text-3xl font-bold tracking-tight">
             HERMES<span className="text-accent">x402</span>
           </Link>
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2">
+            <div className="pointer-events-auto">
+              <CopyCA />
+            </div>
+          </div>
           <nav className="flex items-center gap-5 text-[12px] font-semibold uppercase tracking-wider">
             <Link to="/" className="hover:text-accent">Home</Link>
             <a href="#what" className="hover:text-accent">Features</a>
