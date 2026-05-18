@@ -237,7 +237,9 @@ export default function Landing() {
             className="flex items-center gap-3 font-display text-3xl font-bold tracking-tight"
           >
             <img src="/logo.png" alt="" className="h-11 w-auto" />
-            HERMES<span className="text-accent">x402</span>
+            <span>
+              HERMES<span className="text-accent">x402</span>
+            </span>
           </Link>
           <div className="pointer-events-none absolute left-1/2 -translate-x-1/2">
             <div className="pointer-events-auto">

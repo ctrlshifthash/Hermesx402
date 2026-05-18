@@ -330,7 +330,9 @@ export default function Shell() {
             className="flex items-center gap-2.5 font-display text-3xl font-bold tracking-tight"
           >
             <img src="/logo.png" alt="" className="h-10 w-auto" />
-            HERMES<span className="text-accent">x402</span>
+            <span>
+              HERMES<span className="text-accent">x402</span>
+            </span>
           </Link>
           <div className="flex flex-wrap items-center gap-5">
             <nav className="flex items-center gap-5 text-[12px] font-semibold uppercase tracking-wider">
