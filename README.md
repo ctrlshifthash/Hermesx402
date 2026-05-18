@@ -140,8 +140,8 @@ recorded, the agent runs, the result is yours, the creator is credited.
 
 ```
   React + Vite ──REST──►  FastAPI  ──►  Run worker (in-proc / arq)
-  Tailwind/Framer  ◄─WS─    │              └─► OpenRouterAgentRunner
-  TanStack/Zustand          │                    │ Nous Hermes (OpenRouter)
+  Tailwind/Framer  ◄─WS─    │              └─► Agent runner
+  TanStack/Zustand          │                    │ Nous Hermes 3 (70B)
         │                   │                    │ live web research
         │                   │                    └─► PaidHttpClient ── the x402 wrapper
         │                   │                          │ budget check (pre-pay)
@@ -175,10 +175,9 @@ interface.
 
 - **Backend:** FastAPI · async SQLAlchemy 2 · Pydantic v2 · Alembic · SQLite (local) / Postgres (prod)
 - **Frontend:** React 18 · TypeScript · Vite · TailwindCSS · Framer Motion · TanStack Query · Zustand
-- **Agent:** Nous Hermes 3 (70B) via OpenRouter + live web plugin
+- **Agent:** Nous Hermes 3 (70B) + live web research
 - **Payments:** x402 protocol · USDC · Solana mainnet · [payai](https://facilitator.payai.network) facilitator
 - **Auth:** Privy wallet connect (JWKS ES256), frictionless guest sessions
-- **Deploy:** Railway (backend) · Vercel (frontend)
 
 ---
 
@@ -214,28 +213,12 @@ python -m scripts.verify_user_pays    # credit exhausted → user wallet pays �
 
 ---
 
-## Deployment
-
-**Backend → Railway.** Root directory `backend`, Dockerfile build. Set the env
-vars from `.env.example` (Privy, OpenRouter, x402/Solana, `FRONTEND_ORIGIN`).
-The app binds Railway's `$PORT` automatically.
-
-**Frontend → Vercel.** Root directory `frontend`, Vite preset. Set
-`VITE_API_BASE=https://<your-backend>.up.railway.app` and redeploy (Vite bakes
-env at build time).
-
-Then set the backend's `FRONTEND_ORIGIN` to the exact Vercel origin (no
-trailing slash) for CORS. Secrets are documented in `backend/.env.example`;
-never commit real `.env`.
-
----
-
 ## Project structure
 
 ```
 backend/
   app/
-    agent/        OpenRouterAgentRunner (real Hermes + web), memory, plan
+    agent/        Hermes agent runner (real Hermes + web), memory, plan
     x402/         wrapper · provider · pending · browser/Privy signers
     api/           auth · runs · wallets · payments · calls · dashboard · ops
     workers/      in-proc run worker + scheduler
