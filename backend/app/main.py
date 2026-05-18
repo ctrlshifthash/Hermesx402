@@ -112,13 +112,28 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
 
+import re as _re  # noqa: E402
+
+# FRONTEND_ORIGIN may be a comma-separated list (e.g. the vercel.app URL +
+# a custom domain + www) so a domain cutover never breaks CORS. Each entry
+# is exact-matched (a trailing slash is tolerated/stripped); localhost/
+# 127.0.0.1 on any port is always allowed for local dev.
+_origins = [
+    o.strip().rstrip("/")
+    for o in (settings.frontend_origin or "").split(",")
+    if o.strip()
+]
+_alt = "|".join(_re.escape(o) for o in _origins) or _re.escape(
+    "https://localhost"
+)
+
 app.add_middleware(
     CORSMiddleware,
     # Header-based auth (Bearer/X-Dev-User), no cookies → credentials not
     # needed, so we can safely allow any localhost/127.0.0.1 port plus the
-    # configured prod origin. This removes the #1 silent browser failure.
+    # configured prod origin(s). This removes the #1 silent browser failure.
     allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?|"
-    + settings.frontend_origin.replace(".", r"\.")
+    + _alt
     + r")$",
     allow_credentials=False,
     allow_methods=["*"],
