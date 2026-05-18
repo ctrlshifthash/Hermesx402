@@ -2,6 +2,8 @@
 
 # HERMES·x402
 
+<img src="assets/hero.png" alt="Hermesx402" width="900" />
+
 ### Autonomous AI agents that pay for the data they need — on-chain, on the record.
 
 A real [Nous Hermes](https://nousresearch.com/) agent researches the live web,
