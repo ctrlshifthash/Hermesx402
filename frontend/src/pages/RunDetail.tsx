@@ -54,7 +54,7 @@ function line(e: RunEvent): string {
     case "payment_failed": return `Payment failed (${d.amount}) — ${d.reason ?? ""}`;
     case "api_call_error": return `Request error: ${d.error}`;
     case "api_call_done": return `Completed (${d.status})`;
-    case "status": return `Run ${d.status}${d.summary ? " — " + d.summary : ""}`;
+    case "status": return `Run ${d.status}`;
     default: return e.kind;
   }
 }
