@@ -83,6 +83,7 @@ const NAV = [
   { to: "/payments", label: "Payments" },
   { to: "/calls", label: "API Calls" },
   { to: "/budgets", label: "Budgets" },
+  { to: "/marketplace", label: "Marketplace" },
 ];
 
 function AddWallet({ onClose }: { onClose: () => void }) {

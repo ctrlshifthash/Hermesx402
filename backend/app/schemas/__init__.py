@@ -64,7 +64,38 @@ class AgentOut(ORM):
     wallet_id: str
     name: str
     config_json: str
+    is_public: bool = False
+    title: str | None = None
+    description: str | None = None
+    category: str | None = None
+    price_per_run_usd: Decimal = Decimal("0")
+    runs_rented: int = 0
     created_at: dt.datetime
+
+
+class PublishIn(BaseModel):
+    is_public: bool
+    title: str = Field(min_length=2, max_length=120)
+    description: str = Field(min_length=10, max_length=2000)
+    category: str = Field(default="General", max_length=48)
+    price_per_run_usd: Decimal = Field(default=Decimal("0"), ge=0, le=100)
+
+
+class MarketplaceItem(ORM):
+    id: str
+    name: str
+    title: str | None = None
+    description: str | None = None
+    category: str | None = None
+    price_per_run_usd: Decimal = Decimal("0")
+    runs_rented: int = 0
+    created_at: dt.datetime
+
+
+class EarningsOut(BaseModel):
+    total_earned_usd: Decimal
+    rented_runs: int
+    by_agent: list[dict]
 
 
 # --- Runs ---

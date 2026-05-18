@@ -45,8 +45,23 @@ async def create_run(
             )
         )
     ).scalar_one_or_none()
+    # Marketplace: you can also run a PUBLIC agent you don't own (rent it).
+    # The run uses YOUR wallet/credit; the creator earns the listing price.
+    creator_user_id = None
     if agent is None:
-        raise HTTPException(404, "Agent not found on this wallet")
+        public = (
+            await db.execute(
+                select(Agent).where(
+                    Agent.id == body.agent_id, Agent.is_public.is_(True)
+                )
+            )
+        ).scalar_one_or_none()
+        if public is None:
+            raise HTTPException(404, "Agent not found on this wallet")
+        agent = public
+        if public.user_id != user.id:
+            creator_user_id = public.user_id
+            public.runs_rented = (public.runs_rented or 0) + 1
 
     # A run costs real money (LLM + web). Block it when the trial credit is
     # exhausted AND the wallet is still the auto-provisioned trial one (no
@@ -71,6 +86,7 @@ async def create_run(
         user_id=user.id,
         wallet_id=wallet.id,
         agent_id=agent.id,
+        creator_user_id=creator_user_id,
         goal=body.goal,
         status=RunStatus.queued,
     )

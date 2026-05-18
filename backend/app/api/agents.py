@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_wallet
 from app.db.session import get_db
 from app.models import Agent, User, Wallet
-from app.schemas import AgentIn, AgentOut
+from app.schemas import AgentIn, AgentOut, PublishIn
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -83,6 +83,36 @@ async def update_agent(
         raise HTTPException(404, "Agent not found")
     a.name = body.name
     a.config_json = body.config_json
+    await db.commit()
+    await db.refresh(a)
+    return a
+
+
+@router.post("/{agent_id}/publish", response_model=AgentOut)
+async def publish_agent(
+    agent_id: str,
+    body: PublishIn,
+    db: AsyncSession = Depends(get_db),
+    wallet: Wallet = Depends(get_wallet),
+):
+    """List (or unlist) one of your agents on the marketplace so others can
+    rent it. Only the owner (active wallet) can publish it."""
+    a = (
+        await db.execute(
+            select(Agent).where(
+                Agent.id == agent_id, Agent.wallet_id == wallet.id
+            )
+        )
+    ).scalar_one_or_none()
+    if a is None:
+        raise HTTPException(404, "Agent not found")
+    a.is_public = body.is_public
+    a.title = body.title
+    a.description = body.description
+    a.category = body.category or "General"
+    from decimal import Decimal  # noqa: PLC0415
+
+    a.price_per_run_usd = Decimal(str(body.price_per_run_usd))
     await db.commit()
     await db.refresh(a)
     return a

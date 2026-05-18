@@ -129,6 +129,18 @@ class Agent(Base):
     )
     name: Mapped[str] = mapped_column(String(120))
     config_json: Mapped[str] = mapped_column(Text, default="{}")
+    # --- Marketplace: an agent can be published for others to rent ---
+    is_public: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
+    title: Mapped[str | None] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[str | None] = mapped_column(String(48), index=True)
+    # What a renter pays the creator per run (USD). 0 = free to run.
+    price_per_run_usd: Mapped[Decimal] = mapped_column(
+        Numeric(38, 18), default=Decimal("0")
+    )
+    runs_rented: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), default=_now, index=True
     )
@@ -146,6 +158,9 @@ class Run(Base):
     agent_id: Mapped[str] = mapped_column(
         ForeignKey("agents.id", ondelete="CASCADE"), index=True
     )
+    # Set when the run uses someone else's PUBLIC agent — this user earns
+    # the creator fee. Null for your own agents.
+    creator_user_id: Mapped[str | None] = mapped_column(String(36), index=True)
     goal: Mapped[str] = mapped_column(Text)
     status: Mapped[RunStatus] = mapped_column(
         Enum(RunStatus), default=RunStatus.queued, index=True

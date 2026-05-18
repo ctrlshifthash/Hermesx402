@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Wallet as WalletIcon, Bot, Star, Pencil, Trash2 } from "lucide-react";
+import { Plus, Wallet as WalletIcon, Bot, Star, Pencil, Trash2, Store } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Agent, Wallet } from "@/lib/types";
 import { useWallets, useToasts } from "@/lib/store";
@@ -50,11 +50,132 @@ function NewAgent({ walletId }: { walletId: string }) {
   );
 }
 
+function PublishModal({
+  agent,
+  walletId,
+  onClose,
+}: {
+  agent: Agent;
+  walletId: string;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const push = useToasts((s) => s.push);
+  const [title, setTitle] = useState(agent.title || agent.name);
+  const [desc, setDesc] = useState(agent.description || "");
+  const [cat, setCat] = useState(agent.category || "General");
+  const [price, setPrice] = useState(
+    agent.price_per_run_usd ? String(Number(agent.price_per_run_usd)) : "0.05"
+  );
+  const [busy, setBusy] = useState(false);
+
+  const save = async (makePublic: boolean) => {
+    setBusy(true);
+    try {
+      await api.post(`/agents/${agent.id}/publish?wallet_id=${walletId}`, {
+        is_public: makePublic,
+        title: title.trim(),
+        description: desc.trim(),
+        category: cat,
+        price_per_run_usd: Number(price) || 0,
+      });
+      qc.invalidateQueries({ queryKey: ["agents", walletId] });
+      qc.invalidateQueries({ queryKey: ["marketplace"] });
+      push(makePublic ? "Agent listed on marketplace" : "Agent unlisted", "ok");
+      onClose();
+    } catch (e: any) {
+      push(e?.response?.data?.detail ?? "Failed", "err");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] grid place-items-center bg-ink/40 p-5"
+      onClick={onClose}
+    >
+      <div
+        className="card w-full max-w-md p-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="border-b-2 border-rule px-5 py-3 font-display text-lg font-bold uppercase tracking-wide">
+          List “{agent.name}” on the marketplace
+        </div>
+        <div className="p-5">
+          <label className="label">Title</label>
+          <input
+            className="input"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <label className="label mt-3">Description</label>
+          <textarea
+            className="input h-20 resize-none"
+            placeholder="What does this agent do well?"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+          />
+          <div className="mt-3 flex gap-3">
+            <div className="flex-1">
+              <label className="label">Category</label>
+              <select
+                className="input"
+                value={cat}
+                onChange={(e) => setCat(e.target.value)}
+              >
+                {["General", "Research", "Finance", "Crypto", "Dev", "Data"].map(
+                  (c) => (
+                    <option key={c}>{c}</option>
+                  )
+                )}
+              </select>
+            </div>
+            <div className="w-32">
+              <label className="label">Price/run $</label>
+              <input
+                className="input tnum"
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+          </div>
+          <p className="mt-3 text-[11px] uppercase tracking-wider text-ink-500">
+            You earn 80% of each rental; renters also pay their own usage.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <button
+              className="btn-primary flex-1"
+              disabled={busy || title.trim().length < 2 || desc.trim().length < 10}
+              onClick={() => save(true)}
+            >
+              {busy ? <Spinner /> : "Publish"}
+            </button>
+            {agent.is_public && (
+              <button
+                className="btn-ghost text-debit"
+                disabled={busy}
+                onClick={() => save(false)}
+              >
+                Unlist
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WalletCard({ wallet }: { wallet: Wallet }) {
   const qc = useQueryClient();
   const push = useToasts((s) => s.push);
   const setPrimary = useWallets((s) => s.setPrimary);
   const renameWallet = useWallets((s) => s.rename);
+  const [pub, setPub] = useState<Agent | null>(null);
   const { data: agents, isLoading } = useQuery({
     queryKey: ["agents", wallet.id],
     queryFn: async () =>
@@ -182,6 +303,11 @@ function WalletCard({ wallet }: { wallet: Wallet }) {
                   <td className="px-5 py-3 font-semibold">
                     <span className="inline-flex items-center gap-2">
                       <Bot className="h-4 w-4 text-ink-500" /> {a.name}
+                      {a.is_public && (
+                        <span className="border border-credit/50 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-credit">
+                          Listed
+                        </span>
+                      )}
                     </span>
                   </td>
                   <td className="px-3 py-3">
@@ -194,6 +320,15 @@ function WalletCard({ wallet }: { wallet: Wallet }) {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setPub(a)}
+                        title={a.is_public ? "Edit listing" : "List on marketplace"}
+                        className={`border border-rule p-1.5 hover:bg-paper-200 ${
+                          a.is_public ? "text-credit" : "text-ink-500"
+                        }`}
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         onClick={() => rename(a)}
                         title="Rename"
@@ -221,6 +356,13 @@ function WalletCard({ wallet }: { wallet: Wallet }) {
         </p>
       )}
       <NewAgent walletId={wallet.id} />
+      {pub && (
+        <PublishModal
+          agent={pub}
+          walletId={wallet.id}
+          onClose={() => setPub(null)}
+        />
+      )}
     </div>
   );
 }

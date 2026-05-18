@@ -35,6 +35,7 @@ import Schedules from "@/pages/Schedules";
 import Payments from "@/pages/Payments";
 import Calls from "@/pages/Calls";
 import Settings from "@/pages/Settings";
+import Marketplace from "@/pages/Marketplace";
 
 const gated = (el: JSX.Element) => <RequireWallet>{el}</RequireWallet>;
 
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/payments" element={gated(<Payments />)} />
           <Route path="/calls" element={gated(<Calls />)} />
           <Route path="/budgets" element={gated(<Settings />)} />
+          <Route path="/marketplace" element={gated(<Marketplace />)} />
         </Route>
 
         {/* legacy paths */}

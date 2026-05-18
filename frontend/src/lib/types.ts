@@ -18,7 +18,28 @@ export interface Agent {
   wallet_id: string;
   name: string;
   config_json: string;
+  is_public?: boolean;
+  title?: string | null;
+  description?: string | null;
+  category?: string | null;
+  price_per_run_usd?: string;
+  runs_rented?: number;
   created_at: string;
+}
+export interface MarketplaceItem {
+  id: string;
+  name: string;
+  title: string | null;
+  description: string | null;
+  category: string | null;
+  price_per_run_usd: string;
+  runs_rented: number;
+  created_at: string;
+}
+export interface Earnings {
+  total_earned_usd: string;
+  rented_runs: number;
+  by_agent: { name: string; amount: string; count: number }[];
 }
 export interface Run {
   id: string; wallet_id: string; agent_id: string; goal: string;

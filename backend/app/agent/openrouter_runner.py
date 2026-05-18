@@ -262,10 +262,60 @@ class OpenRouterAgentRunner:
                 user.credit_remaining = (
                     Decimal(str(user.credit_remaining)) - fee
                 )
+
+            # --- Marketplace split: renting someone else's public agent ---
+            # The renter pays the listing price; the platform keeps 20%, the
+            # creator earns 80% (recorded as a creator-earning Payment).
+            rent_total = Decimal("0")
+            if run.creator_user_id:
+                price = Decimal(str(agent.price_per_run_usd or 0))
+                if price > 0:
+                    creator_cut = (price * Decimal("0.80")).quantize(
+                        Decimal("0.000001")
+                    )
+                    rc = ApiCall(
+                        run_id=run.id, wallet_id=run.wallet_id,
+                        agent_id=agent.id, user_id=run.user_id,
+                        url="marketplace://rent", method="RENT",
+                        status_code=200, paid=True, outcome="ok",
+                        purpose=f"Rented agent: {agent.title or agent.name}",
+                    )
+                    db.add(rc)
+                    await db.flush()
+                    # Renter pays the full price (credit first).
+                    if Decimal(str(user.credit_remaining)) >= price:
+                        user.credit_remaining = (
+                            Decimal(str(user.credit_remaining)) - price
+                        )
+                    db.add(Payment(
+                        api_call_id=rc.id, run_id=run.id,
+                        wallet_id=run.wallet_id, user_id=run.user_id,
+                        amount=price, currency="USDC",
+                        network=settings.x402_network,
+                        status=PaymentStatus.settled,
+                        facilitator_ref="platform-credit",
+                        reconcile_note="marketplace rent (renter paid)",
+                        idempotency_key="rent_" + uuid.uuid4().hex,
+                    ))
+                    # Creator's earning (80%).
+                    db.add(Payment(
+                        api_call_id=rc.id, run_id=run.id,
+                        wallet_id=run.wallet_id,
+                        user_id=run.creator_user_id, amount=creator_cut,
+                        currency="USDC", network=settings.x402_network,
+                        status=PaymentStatus.settled,
+                        facilitator_ref="creator-earning",
+                        reconcile_note=(agent.title or agent.name)[:120],
+                        idempotency_key="earn_" + uuid.uuid4().hex,
+                    ))
+                    rent_total = price
+
             run_row = (
                 await db.execute(select(Run).where(Run.id == run.id))
             ).scalar_one()
-            run_row.total_spend = Decimal(str(run_row.total_spend)) + fee
+            run_row.total_spend = (
+                Decimal(str(run_row.total_spend)) + fee + rent_total
+            )
             run_row.total_calls = (run_row.total_calls or 0) + 1
             await db.commit()
             await hub.publish(run.id, {"kind": "payment_settled", "data": {

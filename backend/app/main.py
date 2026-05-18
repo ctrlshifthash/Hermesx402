@@ -12,6 +12,7 @@ from app.api import (
     budgets,
     calls,
     dashboard,
+    marketplace,
     ops,
     payments,
     runs,
@@ -47,6 +48,13 @@ async def lifespan(_: FastAPI):
                 ("users", "privy_wallet_address", "VARCHAR(64)"),
                 ("users", "payments_delegated",
                  "BOOLEAN NOT NULL DEFAULT 0"),
+                ("agents", "is_public", "BOOLEAN NOT NULL DEFAULT 0"),
+                ("agents", "title", "VARCHAR(120)"),
+                ("agents", "description", "TEXT"),
+                ("agents", "category", "VARCHAR(48)"),
+                ("agents", "price_per_run_usd", "NUMERIC DEFAULT 0"),
+                ("agents", "runs_rented", "INTEGER DEFAULT 0"),
+                ("runs", "creator_user_id", "VARCHAR(36)"),
             ]:
                 try:
                     await conn.execute(
@@ -119,7 +127,7 @@ app.add_middleware(
 
 api = settings.api_prefix
 for r in (auth, wallets, agents, runs, schedules, payments, calls,
-          budgets, dashboard, ops):
+          budgets, dashboard, marketplace, ops):
     app.include_router(r.router, prefix=api)
 
 # Real x402 resource-server gate (verify + on-chain settle via facilitator).
