@@ -104,12 +104,13 @@ function LedgerTape() {
 }
 
 // Token contract address — swap "TBA" for the real address at launch.
-const CONTRACT_ADDRESS = "TBA";
+const CONTRACT_ADDRESS = "9eTZTKpi9R5sHT27CBc4Y1W6Vvc9nrDAFKvSy5B8pump";
 
 // Socials. Swap PUMPFUN to the token page once it's live.
 const X_URL = "https://x.com/tryhermesx402";
 const GITHUB_URL = "https://github.com/tryHermesx402/Hermesx402";
-const PUMPFUN_URL = "https://pump.fun";
+const PUMPFUN_URL =
+  "https://pump.fun/coin/9eTZTKpi9R5sHT27CBc4Y1W6Vvc9nrDAFKvSy5B8pump";
 
 const IconX = (
   <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px]">
